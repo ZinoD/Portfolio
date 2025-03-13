@@ -1,1 +1,1 @@
-
+A program utilising HTML,Java and CSS that will allow the user upload a picture of clothing, then it will classify it.  MobileNet Model is loaded using TensorFlow.js. The model classifys the clothing and gives predictions about what the image contains, e.g 90% chance a t shirt and 10% chance a hoodie. 
