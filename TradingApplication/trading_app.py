@@ -1,6 +1,5 @@
 
 
-
 import streamlit as st
 import yfinance as yf
 import pandas as pd
@@ -8,26 +7,32 @@ import ta
 
 st.title("📈 Trading Backtester GUI")
 
+# Select assets to analyze
 symbols = st.multiselect(
 "Select assets to analyze:",
 ['AAPL', 'BTC-USD', 'ETH-USD', '^GSPC', 'EURUSD=X'],
 default=['AAPL', 'BTC-USD']
 )
 
+# Select interval and data period
 interval = st.selectbox("Select interval:", ['1d', '1h'])
 period = st.selectbox("Select data period:", ['3mo', '6mo', '1y'])
 
 def analyze_asset(symbol):
+# Download historical data
 df = yf.download(symbol, interval=interval, period=period, progress=False)
 if df.empty or len(df) < 60:
 return f"⚠️ Not enough data for {symbol}"
 
 df.dropna(inplace=True)
-df['EMA50'] = ta.trend.ema_indicator(df['Close'], window=50).ema_indicator()
+
+# Calculate indicators correctly
+df['EMA50'] = ta.trend.ema_indicator(df['Close'], window=50)
 df['RSI'] = ta.momentum.rsi(df['Close'], window=14)
-macd = ta.trend.macd(df['Close'])
+macd = ta.trend.MACD(df['Close'])
 df['MACD'] = macd.macd_diff()
 
+# Define buy and sell signals
 df['Buy'] = (df['Close'] > df['EMA50']) & (df['RSI'] < 30) & (df['MACD'] > 0) & (df['MACD'].shift(1) < 0)
 df['Sell'] = (df['Close'] < df['EMA50']) & (df['RSI'] > 70) & (df['MACD'] < 0) & (df['MACD'].shift(1) > 0)
 
@@ -35,6 +40,7 @@ position = None
 entry_price = 0
 trades = []
 
+# Backtest trades
 for i in range(1, len(df)):
 if df['Buy'].iloc[i] and position is None:
 position = 'long'
@@ -60,7 +66,10 @@ f"Avg Return: {avg_return:.2f}%\n"
 f"Total Return: {total_return:.2f}%\n"
 )
 
-if st.button("Run Backtest"):
+# Display results
+if symbols:
 for sym in symbols:
 result = analyze_asset(sym)
 st.text(result)
+else:
+st.write("Please select at least one asset to analyze.")
